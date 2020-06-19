@@ -16,5 +16,5 @@ func CalculateDamage(move *Move, attacker, defender *PartyPokemon) uint {
 		stab = 1.5
 	}
 	typeEff := TypeEffectiveness(GEN1, move.Type, defender.Base.Type1) * TypeEffectiveness(GEN1, move.Type, defender.Base.Type2)
-	return uint((((2.0*float64(attacker.Level)/5.0+2.0)*float64(move.Power)*float64(attacker.BattleAttack)/float64(defender.BattleDefense))/50.0 + 2.0) * random * stab * typeEff)
+	return uint((((2.0*float64(attacker.Level)/5.0+2.0)*float64(move.Power)*float64(attacker.BattleSpecial)/float64(defender.BattleSpecial))/50.0 + 2.0) * random * stab * typeEff)
 }
