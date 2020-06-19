@@ -1,0 +1,13 @@
+# pokego
+
+Toy implementation of the Pokemon battle engine in Go.
+
+## Example
+
+```
+> ./pokego
+Pikachu used Thunderbolt on itself! Did 65 damage, current HP: 124Pikachu used Thunderbolt on itself! Did 60 damage, current HP: 64
+Pikachu used Thunderbolt on itself! Did 58 damage, current HP: 6
+Pikachu used Thunderbolt on itself! Did 64 damage, current HP: 0
+Pikachu fainted!
+```
