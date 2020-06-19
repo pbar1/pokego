@@ -1,6 +1,7 @@
 # pokego
 
 Toy implementation of the Pokemon battle engine in Go.
+Inspired by the disassembly of [Pokemon Ruby/Sapphire](https://github.com/pret/pokeruby).
 
 ## Example
 
