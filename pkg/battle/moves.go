@@ -1,169 +1,194 @@
 package battle
 
+type (
+	Move struct {
+		Name     string
+		Type     PokemonType
+		Category DamageCategory
+		PP       uint8
+		Power    int
+		Accuracy int
+		Effect   func(board *Board, target *BoardPosition)
+	}
+
+	DamageCategory uint8
+	MoveEffect     uint8
+)
+
+const (
+	CATEGORY_NONE = iota
+	CATEGORY_PHYSICAL
+	CATEGORY_SPECIAL
+	CATEGORY_STATUS
+)
+
 var (
-	MOVE_POUND          = Move{Index: 1, Name: "Pound", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 35, Power: 40, Accuracy: 100}
-	MOVE_KARATE_CHOP    = Move{Index: 2, Name: "Karate Chop", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 25, Power: 50, Accuracy: 100} // high crit
-	MOVE_DOUBLE_SLAP    = Move{Index: 3, Name: "Double Slap", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: 15, Accuracy: 85}  // hits 2-5 times
-	MOVE_COMET_PUNCH    = Move{Index: 4, Name: "Comet Punch", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 18, Accuracy: 85}  // hits 2-5 times
-	MOVE_MEGA_PUNCH     = Move{Index: 5, Name: "Mega Punch", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 80, Accuracy: 85}
-	MOVE_PAY_DAY        = Move{Index: 6, Name: "Pay Day", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 40, Accuracy: 100}
-	MOVE_FIRE_PUNCH     = Move{Index: 7, Name: "Fire Punch", Type: TYPE_FIRE, Category: CATEGORY_PHYSICAL, PP: 15, Power: 75, Accuracy: 100}
-	MOVE_ICE_PUNCH      = Move{Index: 8, Name: "Ice Punch", Type: TYPE_ICE, Category: CATEGORY_PHYSICAL, PP: 15, Power: 75, Accuracy: 100}
-	MOVE_THUNDER_PUNCH  = Move{Index: 9, Name: "Thunder Punch", Type: TYPE_ELECTRIC, Category: CATEGORY_PHYSICAL, PP: 15, Power: 75, Accuracy: 100}
-	MOVE_SCRATCH        = Move{Index: 10, Name: "Scratch", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 35, Power: 40, Accuracy: 100}
-	MOVE_VISE_GRIP      = Move{Index: 11, Name: "Vise Grip", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 30, Power: 55, Accuracy: 100}
-	MOVE_GUILLOTINE     = Move{Index: 12, Name: "Guillotine", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: -1, Accuracy: 30}
-	MOVE_RAZOR_WIND     = Move{Index: 13, Name: "Razor Wind", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 10, Power: 80, Accuracy: 75}
-	MOVE_SWORDS_DANCE   = Move{Index: 14, Name: "Swords Dance", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_CUT            = Move{Index: 15, Name: "Cut", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 30, Power: 50, Accuracy: 95}
-	MOVE_GUST           = Move{Index: 16, Name: "Gust", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 35, Power: 40, Accuracy: 100}
-	MOVE_WING_ATTACK    = Move{Index: 17, Name: "Wing Attack", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 35, Power: 35, Accuracy: 100}
-	MOVE_WHIRLWIND      = Move{Index: 18, Name: "Whirlwind", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 85}
-	MOVE_FLY            = Move{Index: 19, Name: "Fly", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 15, Power: 70, Accuracy: 95}
-	MOVE_BIND           = Move{Index: 20, Name: "Bind", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 15, Accuracy: 75}
-	MOVE_SLAM           = Move{Index: 21, Name: "Slam", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 80, Accuracy: 75}
-	MOVE_VINE_WHIP      = Move{Index: 22, Name: "Vine Whip", Type: TYPE_GRASS, Category: CATEGORY_PHYSICAL, PP: 10, Power: 35, Accuracy: 100}
-	MOVE_STOMP          = Move{Index: 23, Name: "Stomp", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 65, Accuracy: 100}
-	MOVE_DOUBLE_KICK    = Move{Index: 24, Name: "Double Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 30, Power: 30, Accuracy: 100}
-	MOVE_MEGA_KICK      = Move{Index: 25, Name: "Mega Kick", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: 120, Accuracy: 75}
-	MOVE_JUMP_KICK      = Move{Index: 26, Name: "Jump Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 25, Power: 70, Accuracy: 95}
-	MOVE_ROLLING_KICK   = Move{Index: 27, Name: "Rolling Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 15, Power: 60, Accuracy: 85}
-	MOVE_SAND_ATTACK    = Move{Index: 28, Name: "Sand Attack", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 100}
-	MOVE_HEADBUTT       = Move{Index: 29, Name: "Headbutt", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 70, Accuracy: 100}
-	MOVE_HORN_ATTACK    = Move{Index: 30, Name: "Horn Attack", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 25, Power: 65, Accuracy: 100}
-	MOVE_FURY_ATTACK    = Move{Index: 31, Name: "Fury Attack", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 15, Accuracy: 85}
-	MOVE_HORN_DRILL     = Move{Index: 32, Name: "Horn Drill", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: -1, Accuracy: 30}
-	MOVE_TACKLE         = Move{Index: 33, Name: "Tackle", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 35, Power: 35, Accuracy: 95}
-	MOVE_BODY_SLAM      = Move{Index: 34, Name: "Body Slam", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 85, Accuracy: 100}
-	MOVE_WRAP           = Move{Index: 35, Name: "Wrap", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 15, Accuracy: 85}
-	MOVE_TAKE_DOWN      = Move{Index: 36, Name: "Take Down", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 90, Accuracy: 85}
-	MOVE_THRASH         = Move{Index: 37, Name: "Thrash", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 90, Accuracy: 100}
-	MOVE_DOUBLE_EDGE    = Move{Index: 38, Name: "Double-Edge", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 100, Accuracy: 100}
-	MOVE_TAIL_WHIP      = Move{Index: 39, Name: "Tail Whip", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: 100}
-	MOVE_POISON_STING   = Move{Index: 40, Name: "Poison Sting", Type: TYPE_POISON, Category: CATEGORY_PHYSICAL, PP: 35, Power: 15, Accuracy: 100}
-	MOVE_TWINEEDLE      = Move{Index: 41, Name: "Twineedle", Type: TYPE_BUG, Category: CATEGORY_PHYSICAL, PP: 20, Power: 25, Accuracy: 100}
-	MOVE_PIN_MISSILE    = Move{Index: 42, Name: "Pin Missile", Type: TYPE_BUG, Category: CATEGORY_PHYSICAL, PP: 20, Power: 14, Accuracy: 85}
-	MOVE_LEER           = Move{Index: 43, Name: "Leer", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: 100}
-	MOVE_BITE           = Move{Index: 44, Name: "Bite", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 25, Power: 60, Accuracy: 100}
-	MOVE_GROWL          = Move{Index: 45, Name: "Growl", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: 100}
-	MOVE_ROAR           = Move{Index: 46, Name: "Roar", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 100}
-	MOVE_SING           = Move{Index: 47, Name: "Sing", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 55}
-	MOVE_SUPERSONIC     = Move{Index: 48, Name: "Supersonic", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 55}
-	MOVE_SONIC_BOOM     = Move{Index: 49, Name: "Sonic Boom", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 20, Power: -1, Accuracy: 90} // always deals 20 hp damage
-	MOVE_DISABLE        = Move{Index: 50, Name: "Disable", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 55}
-	MOVE_ACID           = Move{Index: 51, Name: "Acid", Type: TYPE_POISON, Category: CATEGORY_SPECIAL, PP: 30, Power: 40, Accuracy: 100}
-	MOVE_EMBER          = Move{Index: 52, Name: "Ember", Type: TYPE_FIRE, Category: CATEGORY_SPECIAL, PP: 25, Power: 40, Accuracy: 100}
-	MOVE_FLAMETHROWER   = Move{Index: 53, Name: "Flamethrower", Type: TYPE_FIRE, Category: CATEGORY_SPECIAL, PP: 15, Power: 95, Accuracy: 100}
-	MOVE_MIST           = Move{Index: 54, Name: "Mist", Type: TYPE_ICE, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_WATER_GUN      = Move{Index: 55, Name: "Water Gun", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 25, Power: 40, Accuracy: 100}
-	MOVE_HYDRO_PUMP     = Move{Index: 56, Name: "Hydro Pump", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 5, Power: 120, Accuracy: 80}
-	MOVE_SURF           = Move{Index: 57, Name: "Surf", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 15, Power: 95, Accuracy: 100}
-	MOVE_ICE_BEAM       = Move{Index: 58, Name: "Ice Beam", Type: TYPE_ICE, Category: CATEGORY_SPECIAL, PP: 10, Power: 95, Accuracy: 100}
-	MOVE_BLIZZARD       = Move{Index: 59, Name: "Blizzard", Type: TYPE_ICE, Category: CATEGORY_SPECIAL, PP: 5, Power: 120, Accuracy: 90}
-	MOVE_PSYBEAM        = Move{Index: 60, Name: "Psybeam", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 20, Power: 65, Accuracy: 100}
-	MOVE_BUBBLE_BEAM    = Move{Index: 61, Name: "Bubble Beam", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 20, Power: 65, Accuracy: 100}
-	MOVE_AURORA_BEAM    = Move{Index: 62, Name: "Aurora Beam", Type: TYPE_ICE, Category: CATEGORY_SPECIAL, PP: 20, Power: 65, Accuracy: 100}
-	MOVE_HYPER_BEAM     = Move{Index: 63, Name: "Hyper Beam", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 5, Power: 150, Accuracy: 90}
-	MOVE_PECK           = Move{Index: 64, Name: "Peck", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 35, Power: 35, Accuracy: 100}
-	MOVE_DRILL_PECK     = Move{Index: 65, Name: "Drill Peck", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 20, Power: 80, Accuracy: 100}
-	MOVE_SUBMISSION     = Move{Index: 66, Name: "Submission", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 25, Power: 80, Accuracy: 80}
-	MOVE_LOW_KICK       = Move{Index: 67, Name: "Low Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 20, Power: 50, Accuracy: 90}
-	MOVE_COUNTER        = Move{Index: 68, Name: "Counter", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 20, Power: -1, Accuracy: 100}
-	MOVE_SEISMIC_TOSS   = Move{Index: 69, Name: "Seismic Toss", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 20, Power: -1, Accuracy: 100}
-	MOVE_STRENGTH       = Move{Index: 70, Name: "Strength", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 80, Accuracy: 100}
-	MOVE_ABSORB         = Move{Index: 71, Name: "Absorb", Type: TYPE_GRASS, Category: CATEGORY_SPECIAL, PP: 20, Power: 20, Accuracy: 100}
-	MOVE_MEGA_DRAIN     = Move{Index: 72, Name: "Mega Drain", Type: TYPE_GRASS, Category: CATEGORY_SPECIAL, PP: 10, Power: 40, Accuracy: 100}
-	MOVE_LEECH_SEED     = Move{Index: 73, Name: "Leech Seed", Type: TYPE_GRASS, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 90}
-	MOVE_GROWTH         = Move{Index: 74, Name: "Growth", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1}
-	MOVE_RAZOR_LEAF     = Move{Index: 75, Name: "Razor Leaf", Type: TYPE_GRASS, Category: CATEGORY_PHYSICAL, PP: 25, Power: 55, Accuracy: 95}
-	MOVE_SOLAR_BEAM     = Move{Index: 76, Name: "Solar Beam", Type: TYPE_GRASS, Category: CATEGORY_SPECIAL, PP: 10, Power: 120, Accuracy: 100}
-	MOVE_POISON_POWDER  = Move{Index: 77, Name: "Poison Powder", Type: TYPE_POISON, Category: CATEGORY_STATUS, PP: 35, Power: -1, Accuracy: 75}
-	MOVE_STUN_SPORE     = Move{Index: 78, Name: "Stun Spore", Type: TYPE_GRASS, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: 75}
-	MOVE_SLEEP_POWDER   = Move{Index: 79, Name: "Sleep Powder", Type: TYPE_GRASS, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 75}
-	MOVE_PETAL_DANCE    = Move{Index: 80, Name: "Petal Dance", Type: TYPE_GRASS, Category: CATEGORY_SPECIAL, PP: 20, Power: 70, Accuracy: 100}
-	MOVE_STRING_SHOT    = Move{Index: 81, Name: "String Shot", Type: TYPE_BUG, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: 95}
-	MOVE_DRAGON_RAGE    = Move{Index: 82, Name: "Dragon Rage", Type: TYPE_DRAGON, Category: CATEGORY_SPECIAL, PP: 10, Power: -1, Accuracy: 100} // always deals 40 hp damage
-	MOVE_FIRE_SPIN      = Move{Index: 83, Name: "Fire Spin", Type: TYPE_FIRE, Category: CATEGORY_SPECIAL, PP: 15, Power: 15, Accuracy: 70}
-	MOVE_THUNDER_SHOCK  = Move{Index: 84, Name: "Thunder Shock", Type: TYPE_ELECTRIC, Category: CATEGORY_SPECIAL, PP: 30, Power: 40, Accuracy: 100}
-	MOVE_THUNDERBOLT    = Move{Index: 85, Name: "Thunderbolt", Type: TYPE_ELECTRIC, Category: CATEGORY_SPECIAL, PP: 15, Power: 95, Accuracy: 100}
-	MOVE_THUNDER_WAVE   = Move{Index: 86, Name: "Thunder Wave", Type: TYPE_ELECTRIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 100}
-	MOVE_THUNDER        = Move{Index: 87, Name: "Thunder", Type: TYPE_ELECTRIC, Category: CATEGORY_SPECIAL, PP: 10, Power: 120, Accuracy: 70}
-	MOVE_ROCK_THROW     = Move{Index: 88, Name: "Rock Throw", Type: TYPE_ROCK, Category: CATEGORY_PHYSICAL, PP: 15, Power: 50, Accuracy: 65}
-	MOVE_EARTHQUAKE     = Move{Index: 89, Name: "Earthquake", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 10, Power: 100, Accuracy: 100}
-	MOVE_FISSURE        = Move{Index: 90, Name: "Fissure", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 5, Power: -1, Accuracy: 30} // custom accuracy
-	MOVE_DIG            = Move{Index: 91, Name: "Dig", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 10, Power: 100, Accuracy: 100}
-	MOVE_TOXIC          = Move{Index: 92, Name: "Toxic", Type: TYPE_POISON, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 85}
-	MOVE_CONFUSION      = Move{Index: 93, Name: "Confusion", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 25, Power: 50, Accuracy: 100}
-	MOVE_PSYCHIC        = Move{Index: 94, Name: "Psychic", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 10, Power: 90, Accuracy: 100}
-	MOVE_HYPNOSIS       = Move{Index: 95, Name: "Hypnosis", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 60}
-	MOVE_MEDITATE       = Move{Index: 96, Name: "Meditate", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1}
-	MOVE_AGILITY        = Move{Index: 97, Name: "Agility", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_QUICK_ATTACK   = Move{Index: 98, Name: "Quick Attack", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 30, Power: 40, Accuracy: 100}
-	MOVE_RAGE           = Move{Index: 99, Name: "Rage", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 20, Accuracy: 100}
-	MOVE_TELEPORT       = Move{Index: 100, Name: "Teleport", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1}
-	MOVE_NIGHT_SHADE    = Move{Index: 101, Name: "Night Shade", Type: TYPE_GHOST, Category: CATEGORY_SPECIAL, PP: 15, Power: -1, Accuracy: 100}
-	MOVE_MIMIC          = Move{Index: 102, Name: "Mimic", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 100}
-	MOVE_SCREECH        = Move{Index: 103, Name: "Screech", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: 85}
-	MOVE_DOUBLE_TEAM    = Move{Index: 104, Name: "Double Team", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: -1}
-	MOVE_RECOVER        = Move{Index: 105, Name: "Recover", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1}
-	MOVE_HARDEN         = Move{Index: 106, Name: "Harden", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_MINIMIZE       = Move{Index: 107, Name: "Minimize", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1}
-	MOVE_SMOKESCREEN    = Move{Index: 108, Name: "Smokescreen", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 100}
-	MOVE_CONFUSE_RAY    = Move{Index: 109, Name: "Confuse Ray", Type: TYPE_GHOST, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 100}
-	MOVE_WITHDRAW       = Move{Index: 110, Name: "Withdraw", Type: TYPE_WATER, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1}
-	MOVE_DEFENSE_CURL   = Move{Index: 111, Name: "Defense Curl", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1}
-	MOVE_BARRIER        = Move{Index: 112, Name: "Barrier", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_LIGHT_SCREEN   = Move{Index: 113, Name: "Light Screen", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_HAZE           = Move{Index: 114, Name: "Haze", Type: TYPE_ICE, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_REFLECT        = Move{Index: 115, Name: "Reflect", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1}
-	MOVE_FOCUS_ENERGY   = Move{Index: 116, Name: "Focus Energy", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_BIDE           = Move{Index: 117, Name: "Bide", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: -1, Accuracy: 100}
-	MOVE_METRONOME      = Move{Index: 118, Name: "Metronome", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1}
-	MOVE_MIRROR_MOVE    = Move{Index: 119, Name: "Mirror Move", Type: TYPE_FLYING, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1}
-	MOVE_SELF_DESTRUCT  = Move{Index: 120, Name: "Self-Destruct", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: 130, Accuracy: 100}
-	MOVE_EGG_BOMB       = Move{Index: 121, Name: "Egg Bomb", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: 100, Accuracy: 75}
-	MOVE_LICK           = Move{Index: 122, Name: "Lick", Type: TYPE_GHOST, Category: CATEGORY_PHYSICAL, PP: 30, Power: 20, Accuracy: 100}
-	MOVE_SMOG           = Move{Index: 123, Name: "Smog", Type: TYPE_POISON, Category: CATEGORY_SPECIAL, PP: 20, Power: 20, Accuracy: 70}
-	MOVE_SLUDGE         = Move{Index: 124, Name: "Sludge", Type: TYPE_POISON, Category: CATEGORY_SPECIAL, PP: 20, Power: 65, Accuracy: 100}
-	MOVE_BONE_CLUB      = Move{Index: 125, Name: "Bone Club", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 20, Power: 65, Accuracy: 85}
-	MOVE_FIRE_BLAST     = Move{Index: 126, Name: "Fire Blast", Type: TYPE_FIRE, Category: CATEGORY_SPECIAL, PP: 5, Power: 120, Accuracy: 85}
-	MOVE_WATERFALL      = Move{Index: 127, Name: "Waterfall", Type: TYPE_WATER, Category: CATEGORY_PHYSICAL, PP: 15, Power: 80, Accuracy: 100}
-	MOVE_CLAMP          = Move{Index: 128, Name: "Clamp", Type: TYPE_WATER, Category: CATEGORY_PHYSICAL, PP: 10, Power: 35, Accuracy: 75}
-	MOVE_SWIFT          = Move{Index: 129, Name: "Swift", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 20, Power: 60, Accuracy: -1}
-	MOVE_SKULL_BASH     = Move{Index: 130, Name: "Skull Bash", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 100, Accuracy: 100}
-	MOVE_SPIKE_CANNON   = Move{Index: 131, Name: "Spike Cannon", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 20, Accuracy: 100}
-	MOVE_CONSTRICT      = Move{Index: 132, Name: "Constrict", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 35, Power: 10, Accuracy: 100}
-	MOVE_AMNESIA        = Move{Index: 133, Name: "Amnesia", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1}
-	MOVE_KINESIS        = Move{Index: 134, Name: "Kinesis", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 80}
-	MOVE_SOFT_BOILED    = Move{Index: 135, Name: "Soft-Boiled", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1}
-	MOVE_HIGH_JUMP_KICK = Move{Index: 136, Name: "High Jump Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 20, Power: 85, Accuracy: 90}
-	MOVE_GLARE          = Move{Index: 137, Name: "Glare", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: 75}
-	MOVE_DREAM_EATER    = Move{Index: 138, Name: "Dream Eater", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 15, Power: 100, Accuracy: 100}
-	MOVE_POISON_GAS     = Move{Index: 139, Name: "Poison Gas", Type: TYPE_POISON, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: 55}
-	MOVE_BARRAGE        = Move{Index: 140, Name: "Barrage", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 15, Accuracy: 85}
-	MOVE_LEECH_LIFE     = Move{Index: 141, Name: "Leech Life", Type: TYPE_BUG, Category: CATEGORY_PHYSICAL, PP: 15, Power: 20, Accuracy: 100}
-	MOVE_LOVELY_KISS    = Move{Index: 142, Name: "Lovely Kiss", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 75}
-	MOVE_SKY_ATTACK     = Move{Index: 143, Name: "Sky Attack", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 5, Power: 140, Accuracy: 90}
-	MOVE_TRANSFORM      = Move{Index: 144, Name: "Transform", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1}
-	MOVE_BUBBLE         = Move{Index: 145, Name: "Bubble", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 30, Power: 20, Accuracy: 100}
-	MOVE_DIZZY_PUNCH    = Move{Index: 146, Name: "Dizzy Punch", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: 70, Accuracy: 100}
-	MOVE_SPORE          = Move{Index: 147, Name: "Spore", Type: TYPE_GRASS, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 100}
-	MOVE_FLASH          = Move{Index: 148, Name: "Flash", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 70}
-	MOVE_PSYWAVE        = Move{Index: 149, Name: "Psywave", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 15, Power: -1, Accuracy: 80}
-	MOVE_SPLASH         = Move{Index: 150, Name: "Splash", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1}
-	MOVE_ACID_ARMOR     = Move{Index: 151, Name: "Acid Armor", Type: TYPE_POISON, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1}
-	MOVE_CRABHAMMER     = Move{Index: 152, Name: "Crabhammer", Type: TYPE_WATER, Category: CATEGORY_PHYSICAL, PP: 10, Power: 90, Accuracy: 85}
-	MOVE_EXPLOSION      = Move{Index: 153, Name: "Explosion", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: 170, Accuracy: 100}
-	MOVE_FURY_SWIPES    = Move{Index: 154, Name: "Fury Swipes", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 18, Accuracy: 80}
-	MOVE_BONEMERANG     = Move{Index: 155, Name: "Bonemerang", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 10, Power: 50, Accuracy: 90}
-	MOVE_REST           = Move{Index: 156, Name: "Rest", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1}
-	MOVE_ROCK_SLIDE     = Move{Index: 157, Name: "Rock Slide", Type: TYPE_ROCK, Category: CATEGORY_PHYSICAL, PP: 10, Power: 75, Accuracy: 90}
-	MOVE_HYPER_FANG     = Move{Index: 158, Name: "Hyper Fang", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 80, Accuracy: 90}
-	MOVE_SHARPEN        = Move{Index: 159, Name: "Sharpen", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_CONVERSION     = Move{Index: 160, Name: "Conversion", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1}
-	MOVE_TRI_ATTACK     = Move{Index: 161, Name: "Tri Attack", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 10, Power: 80, Accuracy: 100}
-	MOVE_SUPER_FANG     = Move{Index: 162, Name: "Super Fang", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: -1, Accuracy: 90}
-	MOVE_SLASH          = Move{Index: 163, Name: "Slash", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 70, Accuracy: 100}
-	MOVE_SUBSTITUTE     = Move{Index: 164, Name: "Substitute", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1}
-	MOVE_STRUGGLE       = Move{Index: 165, Name: "Struggle", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: 50, Accuracy: 100}
+	Moves = [166]Move{
+		{Name: "", Type: TYPE_NONE, Category: CATEGORY_NONE, PP: 0, Power: 0, Accuracy: 0},
+		{Name: "Pound", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 35, Power: 40, Accuracy: 100},
+		{Name: "Karate Chop", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 25, Power: 50, Accuracy: 100},
+		{Name: "Double Slap", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: 15, Accuracy: 85},
+		{Name: "Comet Punch", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 18, Accuracy: 85},
+		{Name: "Mega Punch", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 80, Accuracy: 85},
+		{Name: "Pay Day", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 40, Accuracy: 100},
+		{Name: "Fire Punch", Type: TYPE_FIRE, Category: CATEGORY_PHYSICAL, PP: 15, Power: 75, Accuracy: 100, Effect: func(b *Board, t *BoardPosition) { MoveEffectStatus(b, t, STATUS_BURNED, 10) }},
+		{Name: "Ice Punch", Type: TYPE_ICE, Category: CATEGORY_PHYSICAL, PP: 15, Power: 75, Accuracy: 100, Effect: func(b *Board, t *BoardPosition) { MoveEffectStatus(b, t, STATUS_FROZEN, 10) }},
+		{Name: "Thunder Punch", Type: TYPE_ELECTRIC, Category: CATEGORY_PHYSICAL, PP: 15, Power: 75, Accuracy: 100, Effect: func(b *Board, t *BoardPosition) { MoveEffectStatus(b, t, STATUS_PARALYZED, 10) }},
+		{Name: "Scratch", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 35, Power: 40, Accuracy: 100},
+		{Name: "Vise Grip", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 30, Power: 55, Accuracy: 100},
+		{Name: "Guillotine", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: -1, Accuracy: 30},
+		{Name: "Razor Wind", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 10, Power: 80, Accuracy: 75},
+		{Name: "Swords Dance", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Cut", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 30, Power: 50, Accuracy: 95},
+		{Name: "Gust", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 35, Power: 40, Accuracy: 100},
+		{Name: "Wing Attack", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 35, Power: 35, Accuracy: 100},
+		{Name: "Whirlwind", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 85},
+		{Name: "Fly", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 15, Power: 70, Accuracy: 95},
+		{Name: "Bind", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 15, Accuracy: 75},
+		{Name: "Slam", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 80, Accuracy: 75},
+		{Name: "Vine Whip", Type: TYPE_GRASS, Category: CATEGORY_PHYSICAL, PP: 10, Power: 35, Accuracy: 100},
+		{Name: "Stomp", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 65, Accuracy: 100},
+		{Name: "Double Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 30, Power: 30, Accuracy: 100},
+		{Name: "Mega Kick", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: 120, Accuracy: 75},
+		{Name: "Jump Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 25, Power: 70, Accuracy: 95},
+		{Name: "Rolling Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 15, Power: 60, Accuracy: 85},
+		{Name: "Sand Attack", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 100},
+		{Name: "Headbutt", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 70, Accuracy: 100},
+		{Name: "Horn Attack", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 25, Power: 65, Accuracy: 100},
+		{Name: "Fury Attack", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 15, Accuracy: 85},
+		{Name: "Horn Drill", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: -1, Accuracy: 30},
+		{Name: "Tackle", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 35, Power: 35, Accuracy: 95},
+		{Name: "Body Slam", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 85, Accuracy: 100},
+		{Name: "Wrap", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 15, Accuracy: 85},
+		{Name: "Take Down", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 90, Accuracy: 85},
+		{Name: "Thrash", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 90, Accuracy: 100},
+		{Name: "Double-Edge", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 100, Accuracy: 100},
+		{Name: "Tail Whip", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: 100},
+		{Name: "Poison Sting", Type: TYPE_POISON, Category: CATEGORY_PHYSICAL, PP: 35, Power: 15, Accuracy: 100},
+		{Name: "Twineedle", Type: TYPE_BUG, Category: CATEGORY_PHYSICAL, PP: 20, Power: 25, Accuracy: 100},
+		{Name: "Pin Missile", Type: TYPE_BUG, Category: CATEGORY_PHYSICAL, PP: 20, Power: 14, Accuracy: 85},
+		{Name: "Leer", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: 100},
+		{Name: "Bite", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 25, Power: 60, Accuracy: 100},
+		{Name: "Growl", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: 100},
+		{Name: "Roar", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 100},
+		{Name: "Sing", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 55},
+		{Name: "Supersonic", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 55},
+		{Name: "Sonic Boom", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 20, Power: -1, Accuracy: 90},
+		{Name: "Disable", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 55},
+		{Name: "Acid", Type: TYPE_POISON, Category: CATEGORY_SPECIAL, PP: 30, Power: 40, Accuracy: 100},
+		{Name: "Ember", Type: TYPE_FIRE, Category: CATEGORY_SPECIAL, PP: 25, Power: 40, Accuracy: 100},
+		{Name: "Flamethrower", Type: TYPE_FIRE, Category: CATEGORY_SPECIAL, PP: 15, Power: 95, Accuracy: 100},
+		{Name: "Mist", Type: TYPE_ICE, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Water Gun", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 25, Power: 40, Accuracy: 100},
+		{Name: "Hydro Pump", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 5, Power: 120, Accuracy: 80},
+		{Name: "Surf", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 15, Power: 95, Accuracy: 100},
+		{Name: "Ice Beam", Type: TYPE_ICE, Category: CATEGORY_SPECIAL, PP: 10, Power: 95, Accuracy: 100},
+		{Name: "Blizzard", Type: TYPE_ICE, Category: CATEGORY_SPECIAL, PP: 5, Power: 120, Accuracy: 90},
+		{Name: "Psybeam", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 20, Power: 65, Accuracy: 100},
+		{Name: "Bubble Beam", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 20, Power: 65, Accuracy: 100},
+		{Name: "Aurora Beam", Type: TYPE_ICE, Category: CATEGORY_SPECIAL, PP: 20, Power: 65, Accuracy: 100},
+		{Name: "Hyper Beam", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 5, Power: 150, Accuracy: 90},
+		{Name: "Peck", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 35, Power: 35, Accuracy: 100},
+		{Name: "Drill Peck", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 20, Power: 80, Accuracy: 100},
+		{Name: "Submission", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 25, Power: 80, Accuracy: 80},
+		{Name: "Low Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 20, Power: 50, Accuracy: 90},
+		{Name: "Counter", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 20, Power: -1, Accuracy: 100},
+		{Name: "Seismic Toss", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 20, Power: -1, Accuracy: 100},
+		{Name: "Strength", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 80, Accuracy: 100},
+		{Name: "Absorb", Type: TYPE_GRASS, Category: CATEGORY_SPECIAL, PP: 20, Power: 20, Accuracy: 100},
+		{Name: "Mega Drain", Type: TYPE_GRASS, Category: CATEGORY_SPECIAL, PP: 10, Power: 40, Accuracy: 100},
+		{Name: "Leech Seed", Type: TYPE_GRASS, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 90},
+		{Name: "Growth", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1},
+		{Name: "Razor Leaf", Type: TYPE_GRASS, Category: CATEGORY_PHYSICAL, PP: 25, Power: 55, Accuracy: 95},
+		{Name: "Solar Beam", Type: TYPE_GRASS, Category: CATEGORY_SPECIAL, PP: 10, Power: 120, Accuracy: 100},
+		{Name: "Poison Powder", Type: TYPE_POISON, Category: CATEGORY_STATUS, PP: 35, Power: -1, Accuracy: 75},
+		{Name: "Stun Spore", Type: TYPE_GRASS, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: 75},
+		{Name: "Sleep Powder", Type: TYPE_GRASS, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 75},
+		{Name: "Petal Dance", Type: TYPE_GRASS, Category: CATEGORY_SPECIAL, PP: 20, Power: 70, Accuracy: 100},
+		{Name: "String Shot", Type: TYPE_BUG, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: 95},
+		{Name: "Dragon Rage", Type: TYPE_DRAGON, Category: CATEGORY_SPECIAL, PP: 10, Power: -1, Accuracy: 100},
+		{Name: "Fire Spin", Type: TYPE_FIRE, Category: CATEGORY_SPECIAL, PP: 15, Power: 15, Accuracy: 70},
+		{Name: "Thunder Shock", Type: TYPE_ELECTRIC, Category: CATEGORY_SPECIAL, PP: 30, Power: 40, Accuracy: 100},
+		{Name: "Thunderbolt", Type: TYPE_ELECTRIC, Category: CATEGORY_SPECIAL, PP: 15, Power: 95, Accuracy: 100},
+		{Name: "Thunder Wave", Type: TYPE_ELECTRIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 100},
+		{Name: "Thunder", Type: TYPE_ELECTRIC, Category: CATEGORY_SPECIAL, PP: 10, Power: 120, Accuracy: 70},
+		{Name: "Rock Throw", Type: TYPE_ROCK, Category: CATEGORY_PHYSICAL, PP: 15, Power: 50, Accuracy: 65},
+		{Name: "Earthquake", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 10, Power: 100, Accuracy: 100},
+		{Name: "Fissure", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 5, Power: -1, Accuracy: 30},
+		{Name: "Dig", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 10, Power: 100, Accuracy: 100},
+		{Name: "Toxic", Type: TYPE_POISON, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 85},
+		{Name: "Confusion", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 25, Power: 50, Accuracy: 100},
+		{Name: "Psychic", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 10, Power: 90, Accuracy: 100},
+		{Name: "Hypnosis", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 60},
+		{Name: "Meditate", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1},
+		{Name: "Agility", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Quick Attack", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 30, Power: 40, Accuracy: 100},
+		{Name: "Rage", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 20, Accuracy: 100},
+		{Name: "Teleport", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1},
+		{Name: "Night Shade", Type: TYPE_GHOST, Category: CATEGORY_SPECIAL, PP: 15, Power: -1, Accuracy: 100},
+		{Name: "Mimic", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 100},
+		{Name: "Screech", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: 85},
+		{Name: "Double Team", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: -1},
+		{Name: "Recover", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1},
+		{Name: "Harden", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Minimize", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1},
+		{Name: "Smokescreen", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 100},
+		{Name: "Confuse Ray", Type: TYPE_GHOST, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 100},
+		{Name: "Withdraw", Type: TYPE_WATER, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1},
+		{Name: "Defense Curl", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1},
+		{Name: "Barrier", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Light Screen", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Haze", Type: TYPE_ICE, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Reflect", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1},
+		{Name: "Focus Energy", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Bide", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: -1, Accuracy: 100},
+		{Name: "Metronome", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1},
+		{Name: "Mirror Move", Type: TYPE_FLYING, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1},
+		{Name: "Self-Destruct", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: 130, Accuracy: 100},
+		{Name: "Egg Bomb", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: 100, Accuracy: 75},
+		{Name: "Lick", Type: TYPE_GHOST, Category: CATEGORY_PHYSICAL, PP: 30, Power: 20, Accuracy: 100},
+		{Name: "Smog", Type: TYPE_POISON, Category: CATEGORY_SPECIAL, PP: 20, Power: 20, Accuracy: 70},
+		{Name: "Sludge", Type: TYPE_POISON, Category: CATEGORY_SPECIAL, PP: 20, Power: 65, Accuracy: 100},
+		{Name: "Bone Club", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 20, Power: 65, Accuracy: 85},
+		{Name: "Fire Blast", Type: TYPE_FIRE, Category: CATEGORY_SPECIAL, PP: 5, Power: 120, Accuracy: 85},
+		{Name: "Waterfall", Type: TYPE_WATER, Category: CATEGORY_PHYSICAL, PP: 15, Power: 80, Accuracy: 100},
+		{Name: "Clamp", Type: TYPE_WATER, Category: CATEGORY_PHYSICAL, PP: 10, Power: 35, Accuracy: 75},
+		{Name: "Swift", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 20, Power: 60, Accuracy: -1},
+		{Name: "Skull Bash", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 100, Accuracy: 100},
+		{Name: "Spike Cannon", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 20, Accuracy: 100},
+		{Name: "Constrict", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 35, Power: 10, Accuracy: 100},
+		{Name: "Amnesia", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: -1},
+		{Name: "Kinesis", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 80},
+		{Name: "Soft-Boiled", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1},
+		{Name: "High Jump Kick", Type: TYPE_FIGHTING, Category: CATEGORY_PHYSICAL, PP: 20, Power: 85, Accuracy: 90},
+		{Name: "Glare", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: 75},
+		{Name: "Dream Eater", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 15, Power: 100, Accuracy: 100},
+		{Name: "Poison Gas", Type: TYPE_POISON, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: 55},
+		{Name: "Barrage", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 15, Accuracy: 85},
+		{Name: "Leech Life", Type: TYPE_BUG, Category: CATEGORY_PHYSICAL, PP: 15, Power: 20, Accuracy: 100},
+		{Name: "Lovely Kiss", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: 75},
+		{Name: "Sky Attack", Type: TYPE_FLYING, Category: CATEGORY_PHYSICAL, PP: 5, Power: 140, Accuracy: 90},
+		{Name: "Transform", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1},
+		{Name: "Bubble", Type: TYPE_WATER, Category: CATEGORY_SPECIAL, PP: 30, Power: 20, Accuracy: 100},
+		{Name: "Dizzy Punch", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: 70, Accuracy: 100},
+		{Name: "Spore", Type: TYPE_GRASS, Category: CATEGORY_STATUS, PP: 15, Power: -1, Accuracy: 100},
+		{Name: "Flash", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 20, Power: -1, Accuracy: 70},
+		{Name: "Psywave", Type: TYPE_PSYCHIC, Category: CATEGORY_SPECIAL, PP: 15, Power: -1, Accuracy: 80},
+		{Name: "Splash", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1},
+		{Name: "Acid Armor", Type: TYPE_POISON, Category: CATEGORY_STATUS, PP: 40, Power: -1, Accuracy: -1},
+		{Name: "Crabhammer", Type: TYPE_WATER, Category: CATEGORY_PHYSICAL, PP: 10, Power: 90, Accuracy: 85},
+		{Name: "Explosion", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 5, Power: 170, Accuracy: 100},
+		{Name: "Fury Swipes", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 18, Accuracy: 80},
+		{Name: "Bonemerang", Type: TYPE_GROUND, Category: CATEGORY_PHYSICAL, PP: 10, Power: 50, Accuracy: 90},
+		{Name: "Rest", Type: TYPE_PSYCHIC, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1},
+		{Name: "Rock Slide", Type: TYPE_ROCK, Category: CATEGORY_PHYSICAL, PP: 10, Power: 75, Accuracy: 90},
+		{Name: "Hyper Fang", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 15, Power: 80, Accuracy: 90},
+		{Name: "Sharpen", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Conversion", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 30, Power: -1, Accuracy: -1},
+		{Name: "Tri Attack", Type: TYPE_NORMAL, Category: CATEGORY_SPECIAL, PP: 10, Power: 80, Accuracy: 100},
+		{Name: "Super Fang", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: -1, Accuracy: 90},
+		{Name: "Slash", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 20, Power: 70, Accuracy: 100},
+		{Name: "Substitute", Type: TYPE_NORMAL, Category: CATEGORY_STATUS, PP: 10, Power: -1, Accuracy: -1},
+		{Name: "Struggle", Type: TYPE_NORMAL, Category: CATEGORY_PHYSICAL, PP: 10, Power: 50, Accuracy: 100},
+	}
 )

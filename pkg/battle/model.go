@@ -7,8 +7,6 @@ type (
 
 	Status uint8
 
-	DamageCategory uint8
-
 	BasePokemon struct {
 		DexNumber      uint
 		Name           string
@@ -43,25 +41,16 @@ type (
 	}
 
 	BoardPosition struct {
-		BuffAttack       uint8
-		BuffDefense      uint8
-		BuffSpecial      uint8
-		BuffSpeed        uint8
-		BuffAccuracy     uint8
-		BuffEvasion      uint8
-		ConfusionCounter uint8
-		ToxSeedCounter   uint8
-	}
-
-	Move struct {
-		Index    uint
-		Name     string
-		Type     PokemonType
-		Category DamageCategory
-		PP       uint8
-		Power    int
-		Accuracy int
-		Effect   func(*Board)
+		Pokemon               BattlePokemon
+		BuffAttack            uint8
+		BuffDefense           uint8
+		BuffSpecial           uint8
+		BuffSpeed             uint8
+		BuffAccuracy          uint8
+		BuffEvasion           uint8
+		ConfusionCounter      uint8
+		ToxSeedCounter        uint8
+		SubstituteRemainingHP uint8
 	}
 )
 
@@ -77,18 +66,13 @@ const (
 )
 
 const (
-	STATUS_POISONED = iota
+	STATUS_NONE Status = iota
+	STATUS_POISONED
 	STATUS_BURNED
 	STATUS_PARALYZED
 	STATUS_ASLEEP
 	STATUS_FROZEN
 	STATUS_FAINTED
-)
-
-const (
-	CATEGORY_PHYSICAL = iota
-	CATEGORY_SPECIAL
-	CATEGORY_STATUS
 )
 
 const (
@@ -114,10 +98,6 @@ const (
 )
 
 var (
-	MoveEffectNone = func(board *Board) {}
-
-	MoveEffectStatus = func(board *Board) {
-	}
 
 	// TODO: to save space, we could make this a matrix of something smaller than float64
 	// [attacking_type][defending_type] -> damage multiplier
