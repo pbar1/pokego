@@ -1,8 +1,14 @@
 package battle
 
 type (
-	Generation  uint8
+	Generation uint8
+
 	PokemonType uint8
+
+	Status uint8
+
+	DamageCategory uint8
+
 	BasePokemon struct {
 		DexNumber      uint
 		Name           string
@@ -16,12 +22,46 @@ type (
 		Speed          uint8
 		Special        uint8
 	}
+
+	BattlePokemon struct {
+		Type1        PokemonType
+		Type2        PokemonType
+		Level        uint8
+		StatHP       uint8
+		StatAttack   uint8
+		StatDefense  uint8
+		StatSpecial  uint8
+		StatSpeed    uint8
+		RemainingHP  uint8
+		Status       Status
+		SleepCounter uint8
+	}
+
+	Board struct {
+		Left  BoardPosition
+		Right BoardPosition
+	}
+
+	BoardPosition struct {
+		BuffAttack       uint8
+		BuffDefense      uint8
+		BuffSpecial      uint8
+		BuffSpeed        uint8
+		BuffAccuracy     uint8
+		BuffEvasion      uint8
+		ConfusionCounter uint8
+		ToxSeedCounter   uint8
+	}
+
 	Move struct {
+		Index    uint
 		Name     string
 		Type     PokemonType
-		Power    uint8
-		Accuracy uint8
+		Category DamageCategory
 		PP       uint8
+		Power    int
+		Accuracy int
+		Effect   func(*Board)
 	}
 )
 
@@ -34,6 +74,21 @@ const (
 	GEN6
 	GEN7
 	GEN8
+)
+
+const (
+	STATUS_POISONED = iota
+	STATUS_BURNED
+	STATUS_PARALYZED
+	STATUS_ASLEEP
+	STATUS_FROZEN
+	STATUS_FAINTED
+)
+
+const (
+	CATEGORY_PHYSICAL = iota
+	CATEGORY_SPECIAL
+	CATEGORY_STATUS
 )
 
 const (
@@ -59,6 +114,11 @@ const (
 )
 
 var (
+	MoveEffectNone = func(board *Board) {}
+
+	MoveEffectStatus = func(board *Board) {
+	}
+
 	// TODO: to save space, we could make this a matrix of something smaller than float64
 	// [attacking_type][defending_type] -> damage multiplier
 	// unused Steel, Dark, and Fairy types
@@ -84,7 +144,7 @@ var (
 		{1.0, 1.0, 2.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0}, // Fairy
 	}
 
-	// ununsed Fairy type
+	// unused Fairy type
 	TYPECHART_GEN2 = [19][19]float64{
 		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // None/???
 		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // Normal
