@@ -1,190 +1,139 @@
 package battle
 
 type (
-	Generation uint8
+	Generation      uint8
+	DamageType      uint8
+	DamageCategory  uint8
+	StatusCondition uint8
+	MoveEffect      uint8
 
-	PokemonType uint8
-
-	Status uint8
-
-	BasePokemon struct {
-		DexNumber      uint
-		Name           string
-		Type1          PokemonType
-		Type2          PokemonType
-		HP             uint8
-		Attack         uint8
-		Defense        uint8
-		SpecialAttack  uint8
-		SpecialDefense uint8
-		Speed          uint8
-		Special        uint8
+	Move struct {
+		Name     string
+		Type     DamageType
+		Category DamageCategory
+		PP       int
+		Power    int
+		Accuracy int
+		Effect   func(*Move, *ActivePokemon, *Board) bool
 	}
 
+	BasePokemon struct {
+		DexNo   int
+		Name    string
+		Type1   DamageType
+		Type2   DamageType
+		BaseHP  int
+		BaseAtk int
+		BaseDef int
+		BaseSpe int
+		BaseSpc int
+	}
+
+	// https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_data_structure_in_Generation_I
 	BattlePokemon struct {
-		Type1        PokemonType
-		Type2        PokemonType
-		Level        uint8
-		StatHP       uint8
-		StatAttack   uint8
-		StatDefense  uint8
-		StatSpecial  uint8
-		StatSpeed    uint8
-		RemainingHP  uint8
-		Status       Status
-		SleepCounter uint8
+		DexNo        int
+		CurrentHP    int
+		Level        int
+		Status       StatusCondition
+		Type1        DamageType
+		Type2        DamageType
+		Move1        Move
+		Move2        Move
+		Move3        Move
+		Move4        Move
+		StatHP       int
+		StatAtk      int
+		StatDef      int
+		StatSpe      int
+		StatSpc      int
+		SleepCounter int
+	}
+
+	NewBattlePokemonOpts struct {
+		Base       BasePokemon
+		Level      int
+		DVAtk      int
+		DVDef      int
+		DVSpe      int
+		DVSpc      int
+		StatExpHP  int
+		StatExpAtk int
+		StatExpDef int
+		StatExpSpe int
+		StatExpSpc int
+		Move1      Move
+		Move2      Move
+		Move3      Move
+		Move4      Move
+	}
+
+	ActivePokemon struct {
+		Pokemon             BattlePokemon
+		LvAtk               int
+		LvDef               int
+		LvSpe               int
+		LvSpc               int
+		LvAcc               int
+		LvEvasion           int
+		ConfusionCounter    int
+		ToxSeedCounter      int
+		SubstituteCurrentHP int
+		ReflectUp           bool
+		LightScreenUp       bool
+		Flinch              bool
+	}
+
+	Player struct {
+		Party  [6]BattlePokemon
+		Active ActivePokemon
 	}
 
 	Board struct {
-		Left  BoardPosition
-		Right BoardPosition
-	}
-
-	BoardPosition struct {
-		Pokemon               BattlePokemon
-		BuffAttack            uint8
-		BuffDefense           uint8
-		BuffSpecial           uint8
-		BuffSpeed             uint8
-		BuffAccuracy          uint8
-		BuffEvasion           uint8
-		ConfusionCounter      uint8
-		ToxSeedCounter        uint8
-		SubstituteRemainingHP uint8
+		Player1 Player
+		Player2 Player
 	}
 )
 
 const (
-	GEN1 Generation = iota
-	GEN2
-	GEN3
-	GEN4
-	GEN5
-	GEN6
-	GEN7
-	GEN8
+	Gen1 Generation = iota
+	Gen2
+	Gen3
+	Gen4
+	Gen5
+	Gen6
+	Gen7
+	Gen8
+
+	TypeNone DamageType = iota
+	TypeNormal
+	TypeFighting
+	TypeFlying
+	TypePoison
+	TypeGround
+	TypeRock
+	TypeBug
+	TypeGhost
+	TypeSteel
+	TypeFire
+	TypeWater
+	TypeGrass
+	TypeElectric
+	TypePsychic
+	TypeIce
+	TypeDragon
+	TypeDark
+	TypeFairy
+
+	CatNone DamageCategory = iota
+	CatPhysical
+	CatSpecial
+	CatStatus
+
+	StatusNone StatusCondition = iota
+	StatusSleep
+	StatusPoison
+	StatusBurn
+	StatusFreeze
+	StatusParalyze
+	StatusFaint
 )
-
-const (
-	STATUS_NONE Status = iota
-	STATUS_POISONED
-	STATUS_BURNED
-	STATUS_PARALYZED
-	STATUS_ASLEEP
-	STATUS_FROZEN
-	STATUS_FAINTED
-)
-
-const (
-	TYPE_NONE PokemonType = iota
-	TYPE_NORMAL
-	TYPE_FIGHTING
-	TYPE_FLYING
-	TYPE_POISON
-	TYPE_GROUND
-	TYPE_ROCK
-	TYPE_BUG
-	TYPE_GHOST
-	TYPE_STEEL
-	TYPE_FIRE
-	TYPE_WATER
-	TYPE_GRASS
-	TYPE_ELECTRIC
-	TYPE_PSYCHIC
-	TYPE_ICE
-	TYPE_DRAGON
-	TYPE_DARK
-	TYPE_FAIRY
-)
-
-var (
-
-	// TODO: to save space, we could make this a matrix of something smaller than float64
-	// [attacking_type][defending_type] -> damage multiplier
-	// unused Steel, Dark, and Fairy types
-	TYPECHART_GEN1 = [19][19]float64{
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // None/???
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // Normal
-		{1.0, 2.0, 1.0, 0.5, 0.5, 1.0, 2.0, 0.5, 0.0, 2.0, 1.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 2.0, 0.5}, // Fighting
-		{1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 0.5, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0}, // Flying
-		{1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 2.0, 0.5, 0.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0}, // Poison
-		{1.0, 1.0, 1.0, 0.0, 2.0, 1.0, 2.0, 0.5, 1.0, 2.0, 2.0, 1.0, 0.5, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // Ground
-		{1.0, 1.0, 0.5, 2.0, 1.0, 0.5, 1.0, 2.0, 1.0, 0.5, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0}, // Rock
-		{1.0, 1.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 2.0, 0.5}, // Bug
-		{1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.5, 1.0}, // Ghost
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 0.5, 1.0, 2.0, 1.0, 1.0, 2.0}, // Steel
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0}, // Fire
-		{1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 2.0, 0.5, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0}, // Water
-		{1.0, 1.0, 1.0, 0.5, 0.5, 2.0, 2.0, 0.5, 1.0, 0.5, 0.5, 2.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0}, // Grass
-		{1.0, 1.0, 1.0, 2.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 0.5, 0.5, 1.0, 1.0, 0.5, 1.0, 1.0}, // Electric
-		{1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 0.0, 1.0}, // Psychic
-		{1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 0.5, 1.0, 0.5, 2.0, 1.0, 1.0, 0.5, 2.0, 1.0, 1.0}, // Ice
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 0.0}, // Dragon
-		{1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 0.5}, // Dark
-		{1.0, 1.0, 2.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0}, // Fairy
-	}
-
-	// unused Fairy type
-	TYPECHART_GEN2 = [19][19]float64{
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // None/???
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // Normal
-		{1.0, 2.0, 1.0, 0.5, 0.5, 1.0, 2.0, 0.5, 0.0, 2.0, 1.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 2.0, 0.5}, // Fighting
-		{1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 0.5, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0}, // Flying
-		{1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 0.5, 0.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0}, // Poison
-		{1.0, 1.0, 1.0, 0.0, 2.0, 1.0, 2.0, 0.5, 1.0, 2.0, 2.0, 1.0, 0.5, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // Ground
-		{1.0, 1.0, 0.5, 2.0, 1.0, 0.5, 1.0, 2.0, 1.0, 0.5, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0}, // Rock
-		{1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 2.0, 0.5}, // Bug
-		{1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 1.0}, // Ghost
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 0.5, 1.0, 2.0, 1.0, 1.0, 2.0}, // Steel
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0}, // Fire
-		{1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 2.0, 0.5, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0}, // Water
-		{1.0, 1.0, 1.0, 0.5, 0.5, 2.0, 2.0, 0.5, 1.0, 0.5, 0.5, 2.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0}, // Grass
-		{1.0, 1.0, 1.0, 2.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 0.5, 0.5, 1.0, 1.0, 0.5, 1.0, 1.0}, // Electric
-		{1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 0.0, 1.0}, // Psychic
-		{1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 2.0, 1.0, 1.0, 0.5, 2.0, 1.0, 1.0}, // Ice
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 0.0}, // Dragon
-		{1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 0.5}, // Dark
-		{1.0, 1.0, 2.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0}, // Fairy
-	}
-
-	TYPECHART_GEN6 = [19][19]float64{
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // None/???
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // Normal
-		{1.0, 2.0, 1.0, 0.5, 0.5, 1.0, 2.0, 0.5, 0.0, 2.0, 1.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 2.0, 0.5}, // Fighting
-		{1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 0.5, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0}, // Flying
-		{1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 0.5, 0.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0}, // Poison
-		{1.0, 1.0, 1.0, 0.0, 2.0, 1.0, 2.0, 0.5, 1.0, 2.0, 2.0, 1.0, 0.5, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // Ground
-		{1.0, 1.0, 0.5, 2.0, 1.0, 0.5, 1.0, 2.0, 1.0, 0.5, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0}, // Rock
-		{1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 2.0, 0.5}, // Bug
-		{1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 1.0}, // Ghost
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 0.5, 1.0, 2.0, 1.0, 1.0, 2.0}, // Steel
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 2.0, 1.0, 2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 2.0, 0.5, 1.0, 1.0}, // Fire
-		{1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 2.0, 0.5, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0}, // Water
-		{1.0, 1.0, 1.0, 0.5, 0.5, 2.0, 2.0, 0.5, 1.0, 0.5, 0.5, 2.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0}, // Grass
-		{1.0, 1.0, 1.0, 2.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 0.5, 0.5, 1.0, 1.0, 0.5, 1.0, 1.0}, // Electric
-		{1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 0.0, 1.0}, // Psychic
-		{1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 2.0, 1.0, 1.0, 0.5, 2.0, 1.0, 1.0}, // Ice
-		{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 0.0}, // Dragon
-		{1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 0.5}, // Dark
-		{1.0, 1.0, 2.0, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0}, // Fairy
-	}
-)
-
-// TypeEffectiveness returns the damage multiplier for a given attacking and defending type pair for a given generation
-func TypeEffectiveness(gen Generation, attacker, defender PokemonType) float64 {
-	// this should never happen, so we return a neutral result
-	if attacker > TYPE_FAIRY || defender > TYPE_FAIRY {
-		return 1.0
-	}
-	if gen == GEN1 {
-		return TYPECHART_GEN1[attacker][defender]
-	}
-	if gen >= GEN2 && gen < GEN6 {
-		return TYPECHART_GEN2[attacker][defender]
-	}
-	if gen >= GEN6 {
-		return TYPECHART_GEN6[attacker][defender]
-	}
-	// this should never happen, so we return a neutral result
-	return 1.0
-}
